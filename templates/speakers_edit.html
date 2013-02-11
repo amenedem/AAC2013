@@ -1,0 +1,11 @@
+{% set subtype = "speaker" %}
+{% extends "event_base.html" %}
+
+{% block head2 %}
+{{ subform_handling(['speaker']) }}
+{% endblock %}
+
+{% block formfields %}
+{{ with_errors(form.speakers) }}
+<input type="button" id="add_speaker" value="add speaker">
+{% endblock %}

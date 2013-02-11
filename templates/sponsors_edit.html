@@ -1,0 +1,11 @@
+{% set subtype = "sponsor" %}
+{% extends "event_base.html" %}
+
+{% block head2 %}
+{{ subform_handling(['sponsor']) }}
+{% endblock %}
+
+{% block formfields %}
+{{ with_errors(form.sponsors) }}
+<input type="button" id="add_sponsor" value="add sponsor">
+{% endblock %}

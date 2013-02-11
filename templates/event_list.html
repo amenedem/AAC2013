@@ -1,0 +1,125 @@
+{% extends "global.html" %} 
+
+{% block content %}
+<!-- Replace Static Data with variables -->
+<div class="container-fluid" style="min-height:400px;">
+  <div class="row">
+    <div id="title">
+      <h1 style="font-size: 25px; float: none; margin-bottom: 10px">DevFestW around the world!</h1>
+    </div>
+    <hr class="thin-line">
+  </div>
+  <div class="span3">
+    <div class="row">
+      <span style="margin-left: 5px"> <img src="/images/devfestw.png"></span>
+    </div>
+  </div>
+  <div class="span8">
+    <div class="row">
+      <div id="event-list-container">
+        <div class="event-column">
+          {% for country in events.get_first_half()|sort(attribute='name') %}
+            <ul class="event-no-bullets">
+              <li>
+                <div class="row">
+                  <h3>{{ country.name }}</h3>
+                  <ul class="event-no-bullets">
+                    {% for event in country.data|sort(attribute='location') %}
+                      {% if event.end and event.end < current_date  %} 
+                      {% set eventclass = "past-event col1" %}
+                      {% else %}
+                      {% set eventclass = "event col1" %}
+                      {% endif %}      
+                      <li>
+                        <h4 class="{{eventclass}}"><a href="/event/{{ event.key() }}">DevFest {% if event.name %}{{ event.name }}{% elif event.city %}{{ event.city }}{% else %}{{ event.location }}{% endif %}</a></h4>
+                        <!-- Event Address & Date -->
+                        <h5>{{ event.location }}</h5>
+                        {% if event.start %}
+                          {% if event.end %}
+                          <h6>{{ event.start.strftime("%Y-%m-%d") }} - {{ event.end.strftime("%Y-%m-%d") }}</h6>
+                          {% else %}
+                          <h6>{{ event.start.strftime("%Y-%m-%d") }}</h6>
+                          {% endif %}
+                        {% else %}
+                          {% if event.end %}
+                          <h6> until {{ event.end.strftime("%Y-%m-%d") }}</h6>
+                          {% else %}
+                          <h6></h6>
+                          {% endif %}
+                        {% endif %}
+                        {% if event.end and event.end > current_date  %} 
+                          {% set has_registration = event.register_max > 0 %}
+                          {% if not has_registration %}
+                            {% set has_registration = event.register_url and event.register_url != "" %}
+                          {% endif %}
+                          {% if user in event.participants %}
+                            <span class="label">You are registered!</span>
+                          {% elif has_registration %}
+                            <a class="label label-info" href="/event/register/{{ event.key() }}">Register Now</a>
+                          {% endif %}
+                        {% endif %}
+                        {% if not event.approved %}(unapproved){% endif %}
+                      </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </li>
+            </ul>
+          {% endfor %}
+        </div>
+        <div class="event-column">
+          {% for country in events.get_second_half()|sort(attribute='name') %}
+            <ul class="event-no-bullets">
+              <li>
+                <div class="row">
+                  <h3>{{ country.name }}</h3>
+                  <ul class="event-no-bullets">
+                    {% for event in country.data|sort(attribute='location') %}
+                      {% if event.end and event.end < current_date  %} 
+                      {% set eventclass = "past-event col2" %}
+                      {% else %}
+                      {% set eventclass = "event col2" %}
+                      {% endif %}      
+                      <li>
+                        <h4 class="{{eventclass}}"><a href="/event/{{ event.key() }}">DevFest {% if event.name %}{{ event.name }}{% elif event.city %}{{ event.city }}{% else %}{{ event.location }}{% endif %}</a></h4>
+                        <!-- Event Address & Date -->
+                        <h5>{{ event.location }}</h5>
+                        {% if event.start %}
+                          {% if event.end %}
+                          <h6>{{ event.start.strftime("%Y-%m-%d") }} - {{ event.end.strftime("%Y-%m-%d") }}</h6>
+                          {% else %}
+                          <h6>{{ event.start.strftime("%Y-%m-%d") }}</h6>
+                          {% endif %}
+                        {% else %}
+                          {% if event.end %}
+                          <h6> until {{ event.end.strftime("%Y-%m-%d") }}</h6>
+                          {% else %}
+                          <h6></h6>
+                          {% endif %}
+                        {% endif %}
+                        {% if event.end and event.end > current_date  %} 
+                          {% set has_registration = event.register_max > 0 %}
+                          {% if not has_registration %}
+                            {% set has_registration = event.register_url and event.register_url != "" %}
+                          {% endif %}
+                          {% if user in event.participants %}
+                            <span class="label">You are registered!</span>
+                          {% elif has_registration %}
+                            <a class="label label-info" href="/event/register/{{ event.key() }}">Register Now</a>
+                          {% endif %}
+                        {% endif %}
+                        {% if not event.approved %}(unapproved){% endif %}
+                      </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </li>
+            </ul>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

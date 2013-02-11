@@ -1,0 +1,22 @@
+{% set subtype = "session" %}
+{% extends "event_base.html" %}
+
+{% block head %}
+<link href="/css/ui-lightness/jquery-ui-1.8.23.custom.css" rel="stylesheet" type="text/css" />
+{% endblock %}
+{% block head2 %}
+<script type="text/javascript" src="/js/lib/jquery-ui-timepicker-addon.js"></script>
+{{ subform_handling(['session','track']) }}
+{% endblock %}
+
+{% block formfields %}
+{{ with_errors(form.tracks) }}
+<input type="button" id="add_track" value="add track">
+{{ with_errors(form.sessions) }}
+<input type="button" id="add_session" value="add session">
+<script type="text/javascript">
+  $('.form_DateTimeField').datetimepicker({dateFormat:'yy-mm-dd', timeFormat:'h:mm'});
+  $('.form_DateField').datepicker({dateFormat:'yy-mm-dd'});
+  $('.form_TimeField').timepicker({timeFormat:'h:mm'});
+</script>
+{% endblock %}

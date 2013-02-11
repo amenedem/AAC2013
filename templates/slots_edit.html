@@ -1,0 +1,22 @@
+{% set subtype = "slot" %}
+{% extends "event_base.html" %}
+
+{% block head %}
+<link href="/css/ui-lightness/jquery-ui-1.8.23.custom.css" rel="stylesheet" type="text/css" />
+{% endblock %}
+{% block head2 %}
+<script type="text/javascript" src="/js/lib/jquery-ui-timepicker-addon.js"></script>
+{{ subform_handling(['slot','day']) }}
+{% endblock %}
+
+{% block formfields %}
+{{ with_errors(form.days) }}
+<input type="button" id="add_day" value="add day">
+{{ with_errors(form.slots) }}
+<input type="button" id="add_slot" value="add slot">
+<script type="text/javascript">
+  $('.form_DateTimeField').datetimepicker({dateFormat:'yy-mm-dd',timeFormat:'h:mm'});
+  $('.form_DateField').datepicker({dateFormat:'yy-mm-dd'});
+  $('.form_TimeField').timepicker({timeFormat:'h:mm'});
+</script>
+{% endblock %}

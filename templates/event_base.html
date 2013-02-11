@@ -1,0 +1,254 @@
+{% extends "global.html" %}
+
+{# extend this template for all event-editing, e.g. speakers, sponsors, ... #}
+
+{# use the variable 'subtype' to specify any of: #}
+{#   base (the basic event data) #}
+(#   slot (days and slots of an event) #}
+{#   speaker (speakers of an event) #}
+{#   sponsor (sponsors of an event) #}
+{#   session (sessions of an event) #}
+
+{# use the variable 'event' to indicate the id of the event. #}
+{# if this variable is not set it is assumed that this is a new event, #}
+{# where only base data can be set. #}
+
+{% set subtitle = "Basic Information" %}
+{% if event %}
+  {% set class_base = "label event-link" %}
+  {% set class_slot = "label event-link" %}
+  {% set class_speaker = "label event-link" %}
+  {% set class_sponsor = "label event-link" %}
+  {% set class_session = "label event-link" %}
+  {% if subtype == "base" %}
+    {% set subtitle = "Basic Information" %}
+    {% set class_base = "label active-event-link" %}
+  {% elif subtype == "slot" %}
+    {% set subtitle = "Day and Slot list" %}
+    {% set class_slot = "label active-event-link" %}
+  {% elif subtype == "speaker" %}
+    {% set subtitle = "Speaker list" %}
+    {% set class_speaker = "label active-event-link" %}
+  {% elif subtype == "sponsor" %}
+    {% set subtitle = "Sponsor list" %}
+    {% set class_sponsor = "label active-event-link" %}
+  {% elif subtype == "session" %}
+    {% set subtitle = "Session and Track list" %}
+    {% set class_session = "label active-event-link" %}
+  {% else %} 
+    {% set subtitle = "Other information" %}
+  {% endif %}
+{% endif %}
+
+{% macro subform_handling(fields) %}
+<script type="text/javascript">
+$(document).ready(function() {
+  {% for field in fields %}
+  $('#add_{{field}}').click(function() {
+    clone_field_list('{{field}}s');
+  });
+  handle_delete_buttons('{{field}}s');
+  {% endfor %}
+});
+
+function handle_delete_buttons(name) {
+  var selector = '#' + name;
+  if ($(selector).children('li').length < 2) {
+    // remove delete button
+    $(selector).children('li').each(function() {
+      $(this).children('label')[0].innerHTML = "";
+    });
+  }
+  else {
+    // add delete buttons
+    $(selector).children('li').each(function() {
+      var label = $(this).children('label')[0];
+      var id = $(this).children('table').attr('id');
+      label.innerHTML = "<span class='label button' onclick='del_field(\"" +
+            id + "\",\"" + name + "\");'>delete</span>";
+    });
+  }
+}
+
+function del_field(id,name) {
+  $('#' + id).parent().remove();
+  handle_delete_buttons(name);
+}
+
+function clone_field_list(name) {
+  var selector = '#' + name;
+  var new_element = $(selector + " > li:last").clone(false);
+  var elem_id = new_element.find(':input')[0].id;
+  var elem_num = parseInt(elem_id.replace(/.*-(\d{1,4})-.*/m, '$1')) + 1;
+  // new_element.find(':input').each(function() {
+  // new_element.find('*[id^="' + name + (elem_num - 1) + '"]').each(function() {
+  new_element.find('*').each(function() {
+    if ($(this).attr('id')) {
+      var id = $(this).attr('id').replace(name + '-' + (elem_num - 1), name + '-' + elem_num);
+      $(this).attr({'name': id, 'id': id}).val('').removeAttr('checked');
+    }
+  });
+  new_element.find('label').each(function() {
+    var new_for = $(this).attr('for').replace(name + '-' + (elem_num - 1), name + '-' + elem_num);
+    $(this).attr('for', new_for);
+  });
+  if (new_element.find('.hasDatepicker').length) {
+    new_element.find('.hasDatepicker').removeClass('hasDatepicker');
+    new_element.find('.form_DateTimeField').datetimepicker({dateFormat:'yy-mm-dd', timeFormat:'h:mm'});
+    new_element.find('.form_DateField').datepicker({dateFormat:'yy-mm-dd'});
+    new_element.find('.form_TimeField').timepicker({timeFormat:'h:mm'});
+  }
+  new_element.children('label')[0].innerHTML = "New";
+  $(selector + " > li:last").after(new_element);
+  handle_delete_buttons(name);
+}
+</script>
+{% endmacro %}
+
+{% macro field_label(field) %}
+ {% if field.flags.required %}{{ field.label(class="label_required")}}{% else %}{{field.label}}{% endif %}
+{% endmacro %}
+{% macro with_errors(field) %}
+  <div class="form_field">
+  {{ field_label(field) }}
+  {{ field_only(field) }}
+  </div>
+{% endmacro %}
+{% macro field_only(field) %}
+  {% if field.description %}
+  <div><small>{{ field.description }}</small></div>
+  {% endif %}
+   {% if field.type == "FormField" %}
+    <table class="form_FormField" id="{{field.id}}">
+    {% for entry in field %}
+     <tr>
+     <th>{{field_label(entry)}}</th>
+     <td>{{field_only(entry)}}</td>
+     </tr>
+    {% endfor %}
+    </table>
+   {% elif field.type == "FieldList" and field.entries|length > 0 %}
+     <ul class="form_{{ field.entries[0].type }} form_FieldList" id="{{field.id}}">
+     {% for entry in field.entries %}
+      <li>{{field_label(entry)}}{{field_only(entry)}}</li>
+     {% endfor %}
+     </ul>
+   {% else %}
+    {% set css_class = kwargs.pop('class', 'form_' + field.type) %}
+    {% if field.errors %}
+     {% set css_class = 'has_error ' + css_class %}
+    {% endif %}
+    {% if field.flags.required %}
+     {% set css_class = 'required ' + css_class %}
+    {% endif %}
+    {{ field(class=css_class, **kwargs) }}
+   {% endif %}
+   {% if field.type == "FileField" %}
+    {% if field.data %}
+    <img src="/blob/{{field.data}}" width="100">
+    {% endif %}
+   {% endif %}
+   {% if field.errors %}
+    <div class="error">
+    <ul class="alert alert-error">{% for error in field.errors %}<li>{{ error|e }}</li>{% endfor %}</ul>
+        </div>
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div id="title">
+      {% if event %}
+      <h1 style="font-size: 25px; float: none; margin-bottom: 10px">
+        Edit DevFestW
+        {% if event.city %}{{event.city}}{% else %}{{event.location}}{% endif %}
+      </h1>
+      <a class="label label-info" href="/event/{{event.key()}}" >View event</a>
+      <a class="label label-important" href="/event/delete/{{event.key()}}" onclick="return confirm('Are you sure you want to delete the event?')">Delete event</a>
+      {% else %}
+      <h1 style="font-size: 25px; float: none; margin-bottom: 10px">
+        Create your AAC Event!
+      </h1>
+      {% endif %}
+    </div>
+    <hr class="thin-line">
+  </div>
+  <div class="row-fluid">
+    <div class="span3">
+      <div class="row">
+        <span style="margin-left: 5px">
+          {% if event and event.logo %}
+        <img src="/blob/{{event.logo}}">
+        {% else %}
+        <img src="/images/aacw.png">
+        {% endif %}
+        </span>
+      </div>
+      {% if event %}
+      <a href="/event/edit/{{event.key()}}">
+        <div class="row {{class_base}}">
+          Basic Information
+        </div>
+      </a>
+      <a href="/event/slots/edit/{{event.key()}}">
+        <div class="row {{class_slot}}">
+          Day and Slot list
+        </div>
+      </a>
+      <a href="/event/speakers/edit/{{event.key()}}">
+        <div class="row {{class_speaker}}">
+          Speaker list
+        </div>
+      </a>
+      <a href="/event/sponsors/edit/{{event.key()}}">
+        <div class="row {{class_sponsor}}">
+          Sponsor list
+        </div>
+      </a>
+      <a href="/event/sessions/edit/{{event.key()}}">
+        <div class="row {{class_session}}">
+          Session list
+        </div>
+      </a>
+      {% endif %}
+    </div>
+    <div class="span9">
+      <div class="row">
+        <div id="gdg-edit-event">
+          <form method="post" class="form-horizontal"
+                enctype="multipart/form-data" accept-charset="utf-8" action="{{ form_url }}">
+            {% if event %}
+              <input type="hidden" name="event" value="{{event.key()}}">
+            {% endif %}
+            
+            <ul>
+            {% for field_name, field_errors in form.errors|dictsort if field_errors %}
+              {% for error in field_errors %}
+                <li>{{ form[field_name].label }}: {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+            </ul>
+            
+            {% if created_successful %}
+              <div class="alert alert-success">Event Created Successfully!
+                    Happy Organizing !</div>
+            {% elif modified_successful %}
+              <div class="alert alert-success">Event Modified Successfully!
+                    Happy Organizing !</div>
+            {% endif %}
+            <br>
+            <h2>{{subtitle}}</h2>
+            {% block formfields %}{% endblock %}
+            {% if event %}
+              <div><input type="submit" value="Update Event"></div>
+            {% else %}
+              <div><input type="submit" value="Create Event"></div>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+application: africachallenge2013
+runtime: python27
+api_version: 1
+version: 1
+threadsafe: true
+
+libraries:
+- name: jinja2
+  version: latest
+- name: django
+  version: latest
+
+handlers:
+- url: /favicon.ico
+  static_files: images/favicon.ico
+  upload: images/favicon.ico
+
+- url: /js/(.*)
+  static_files: js/\1
+  upload: js/(.*)
+
+- url: /css/(.*)
+  static_files: css/\1
+  upload: css/(.*)
+
+- url: /images/(.*)
+  static_files: images/\1
+  upload: images/(.*)
+
+- url: /admin.*
+  login: admin
+  script: admin.app
+
+- url: /.*
+  script: index.app
+
+env_variables:
+  DJANGO_SETTINGS_MODULE: 'settings'
+

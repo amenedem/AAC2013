@@ -1,0 +1,173 @@
+{% extends "global.html" %} 
+{% block head %} 
+{% endblock %} 
+
+{% block document_ready %} 
+{% endblock %} 
+
+{% block content %}
+{% set show_agenda = false %}
+
+<div class="container-fluid" id="single_event_agenda">
+  <div class="row">
+    <div id="title">
+      <h1 style="font-size: 25px; float: none; margin-bottom: 10px"> DevFest {% if event.name %}{{event.name}} {%elif event.city %}{{ event.city }}{% else %}{{ event.location }}{% endif %}!</h1>
+    </div>
+    <hr class="thin-line">
+  </div>
+
+  <div class="row-fluid">
+    <div class="span3">
+      <div class="row">
+        <span style="margin-left: 5px"> 
+         {% if event.logo %}
+        <img src="/blob/{{event.logo}}">
+        {% else %}
+        <img src="/images/gdgbig.png">
+        {% endif %}
+        </span>
+        
+        {% if (sponsors|length) > 0 %}                         
+             <span id="gdg-sponsor-container">
+             <h1>Sponsors</h1>
+             <!-- TODO sort groups by sponsor level -->             
+             {% for level, sponsors in sponsors|groupby("level") %}
+               {% for sponsor in sponsors %}
+               <span class="sponsor">
+                 {% if sponsor.level == "0" %}
+                   <img class="sponsor-0" src="/blob/{{sponsor.logo}}">
+                 {% else %}
+                   <img style="width:50px;height:50px;" src="/blob/{{sponsor.logo}}" >
+                 {% endif %}
+                 {% if sponsor.gplus_id %}
+                   <a style="color:black;" href="https://plus.google.com/{{sponsor.gplus_id}}">{{sponsor.name}}</a>
+                 {% else %}
+                   {{sponsor.name}} 
+                 {% endif %}
+                 <br>{{sponsor.description}}
+                 <hr class="thin-line">
+               </span>
+               {% endfor %}  
+               <hr>                
+             {% endfor %}
+             </span> 
+           {% endif %}
+        
+        
+      </div>
+    </div>
+
+    <div class="span9">
+      <div class="row">
+        <div id="gdg-container">
+            <h1>{% if event.name %}{{event.name}} {%elif event.city %}{{ event.city }}{% else %}{{ event.location }}{% endif %}</h1>
+            {% if user in event.organizers or is_admin %}
+            <a href="/event/edit/{{event.key()}}" class="label label-info">Edit the event</a> 
+            {% endif %}
+            <a href="/event/{{event.key()}}" class="label label-info">Home</a>
+            <a href="#" class="label">Agenda</a>
+            <hr>
+
+
+{% for day in agenda.date_list|sort(attribute='date') %}
+{% set date = day.date %}
+<h3>{{ date }}</h3>
+{% if day.description %}
+<p class="about-text">
+{{day.description}}
+<p>
+{%endif%}
+<table>  
+  {% for slot in agenda.slot_list[date]|sort(attribute='slot_txtkey') %}
+    {% if slot.sessioncount > 0 %}
+       <tr class="slot slot_sessions">
+    {% else %}
+       <tr class="slot slot_nosessions">
+    {% endif %}
+       <td>
+         {{ slot.start.strftime('%H:%M')}} - {{ slot.end.strftime('%H:%M')}}
+       </td>
+               
+    {% if slot.sessioncount > 0 %}
+     {% set sessions_room = agenda.by_slot_room[date][slot.slot_txtkey] %}
+     {% for room in agenda.room_list[date]|sort %}     
+      {% if room in sessions_room %}
+       {% set session = sessions_room[room] %}
+       <td class="session">         
+                      
+          {{ session.title }}{% if room != " " %}, {{ room }} {% endif %}</br>                  
+          {% for speaker_key in session.speakers_key %}
+             {% set speaker = speaker_list.get_for_key(speaker_key) %}
+             {% if speaker.gplus_id %}
+             <a class="btn btn-small" href="http://plus.google.com/{{speaker.gplus_id}}" target="_blank">
+               <i class="icon-user"></i>
+               {{speaker.first_name}} {{speaker.last_name}} 
+               {%if speaker.company is not none %}
+                 , {{speaker.company}}
+               {% endif %}
+             </a>
+             {% else %}
+               {{speaker.first_name}} {{speaker.last_name}} 
+               {% if speaker.company is not none %}
+                 , {{speaker.company}}
+               {% endif %}               
+             {% endif %}                                
+         {% endfor %}
+         
+         </td>
+         <td class="track">
+                        
+         {% if session and session.track_key %}
+         {% set track = track_list.get_for_key(session.track_key) %}
+         {% else %}
+         {% set track = none %}
+         {% endif %}
+         {% if track is not none %}
+           {% set icon_url = track_list.get_icon_url(track) %}                          
+           {% if icon_url is not none %}           
+             <img class="icon trackicon" src = "{{icon_url}}"/>
+             {% set show_agenda = true %}            
+           {% else %}
+             {{track.name}}
+           {% endif %}
+         {% endif %}         
+         
+      </td>
+      {% else %}
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      {% endif %}
+     {% endfor %}
+     
+    {% else %}
+    
+      <td colspan="{{ agenda.room_list[date]|length * 2}}">
+        {{ slot.name }}
+      </td>
+    {% endif %}
+  	</tr>
+  {% endfor %}
+ </table>
+{% endfor %}
+
+
+     <hr>
+     <h3>Tracks</h3>
+     
+     {%for track in track_list.get() %}
+     <div class="track">
+     {% set icon_url = track_list.get_icon_url(track) %}                          
+     {% if icon_url is not none %}           
+       <img class="icon trackicon" src = "{{icon_url}}"/>
+     {% endif %}
+     {{track.name}}</br> 
+     </div>
+     {%endfor%}
+     
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+            
+{% endblock %}
